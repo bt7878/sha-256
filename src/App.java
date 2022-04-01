@@ -1,3 +1,5 @@
+import java.util.Scanner;
+
 final class SHA256 {
     private SHA256() {
         throw new AssertionError();
@@ -127,7 +129,17 @@ final class SHA256 {
 
 public class App {
     public static void main(String[] args) throws Exception {
-        byte hashed[] = SHA256.hash("hello world".getBytes());
-        System.out.println(SHA256.byteArrayToHex(hashed));
+        Scanner scanner = new Scanner(System.in);
+        while (true) {
+            System.out.print("Enter string to be hashed (:q to quit): ");
+            String toHash = scanner.nextLine();
+            if (toHash.equals(":q")) {
+                break;
+            }
+            byte hashed[] = SHA256.hash(toHash.getBytes());
+            System.out.print("Hashed value: ");
+            System.out.println(SHA256.byteArrayToHex(hashed));
+        }
+        scanner.close();
     }
 }
