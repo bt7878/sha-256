@@ -3,8 +3,8 @@ final class SHA256 {
         throw new AssertionError();
     }
 
-    public static byte[] hash(byte[] to_hash) {
-        byte input[] = pad(to_hash);
+    public static byte[] hash(byte[] toHash) {
+        byte input[] = pad(toHash);
 
         int k[] = new int[] { 0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4,
                 0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7,
@@ -25,14 +25,12 @@ final class SHA256 {
         int h6 = 0x1f83d9ab;
         int h7 = 0x5be0cd19;
 
+        // preallocate message schedule to save on allocations
+        int w[] = new int[64];
+
         // break into 512 bit chunks
         for (int i = 0; i < input.length; i += 64) {
-            int w[] = createMsgSchedule(input, i);
-            for (int j = 16; j < 64; j++) {
-                int s0 = Integer.rotateRight(w[j - 15], 7) ^ Integer.rotateRight(w[j - 15], 18) ^ w[j - 15] >>> 3;
-                int s1 = Integer.rotateRight(w[j - 2], 17) ^ Integer.rotateRight(w[j - 2], 19) ^ w[j - 2] >>> 10;
-                w[j] = w[j - 16] + s0 + w[j - 7] + s1;
-            }
+            createMsgSchedule(w, input, i);
 
             int a = h0;
             int b = h1;
@@ -104,14 +102,19 @@ final class SHA256 {
         return padded;
     }
 
-    private static int[] createMsgSchedule(byte[] bytes, int start) {
-        int intArr[] = new int[64];
+    private static void createMsgSchedule(int[] intArr, byte[] bytes, int start) {
         for (int i = 0; i < 16; i++) {
             intArr[i] = bytes[i * 4 + start] << 24 & 0xff000000 | bytes[i * 4 + 1 + start] << 16 & 0x00ff0000
                     | bytes[i * 4 + 2 + start] << 8 & 0x0000ff00
                     | bytes[i * 4 + 3 + start] & 0x000000ff;
         }
-        return intArr;
+        for (int i = 16; i < 64; i++) {
+            int s0 = Integer.rotateRight(intArr[i - 15], 7) ^ Integer.rotateRight(intArr[i - 15], 18)
+                    ^ intArr[i - 15] >>> 3;
+            int s1 = Integer.rotateRight(intArr[i - 2], 17) ^ Integer.rotateRight(intArr[i - 2], 19)
+                    ^ intArr[i - 2] >>> 10;
+            intArr[i] = intArr[i - 16] + s0 + intArr[i - 7] + s1;
+        }
     }
 
     public static String byteArrayToHex(byte[] bytes) {
